@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+        <title>Oregon Walks GIS Jam Inventory App</title>
+        <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" /> <!--meta name="viewport" content="initial-scale=1.0, user-scalable=no" /-->
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="description" content="An app for use by the Oregon Walks GIS Jam group and volunteers for a curb ramp inventory in Portland, OR."/>
+        <meta name="author" content="Mele Sax-Barnett http://www.pdxmele.com"/>
+
+        <!--css links-->
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" type="text/css"/> <!--<link rel="stylesheet" href="jquery.mobile-1.2.0.css" type="text/css"/>-->
+        <link rel="stylesheet" href="css/style.mobile.css" type="text/css"/>
+        <link rel="stylesheet" href="css/style.mobile-jq.css" type="text/css"/>
+
+        <!--jQuery links-->
+        <script src="jquery/jquery-1.6.4.js"></script>
+        <script src="jquery/jquery.mobile-1.2.0.js"></script> <!--<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>-->
+        <script src="OpenLayers/OpenLayers.js"></script> <!--script src="OpenLayers/OpenLayers.mobile.js"></script-->
+        <script src="mobile-base.js"></script>
+        <script src="mobile-jq.js"></script>
+    </head>
+
+    <body>
+        <div id="mappage" data-role="page">
+          <div data-role="content">
+            <div id="map"></div>
+          </div>
+          <div data-role="footer">
+            <a href="#" id="locate" data-icon="locate" data-role="button">locate</a>
+          </div>
+          <div id="navigation" data-role="controlgroup" data-type="vertical">
+            <a href="#" data-role="button" data-icon="plus" id="plus" data-iconpos="notext"></a>
+            <a href="#" data-role="button" data-icon="minus" id="minus" data-iconpos="notext"></a>
+          </div>
+        </div>
+
+        <div id="intersectionpage" data-role="page">
+          <div style="text-align:center"><h4>crossing <div id="street" style="display:inline"></div></h4></div>
+          <div data-role="content">
+            <div id="i_map"></div>
+            <table width="100%">
+              <tr>
+                <td><a href="#" data-role="button" id="yes">yes</a></td>
+                <td><a href="#" data-role="button" id="sortOf">sort of</a></td>
+                <td><a href="#" data-role="button" id="no">no</a></td>
+                <td><a href="#" data-role="button" id="skip">skip</a></td>
+              </tr>
+            </table>
+            <table width="100%">
+              <tr>
+                <td><a href="#" data-role="button" id="same">all like last</a></td>
+                <td><a href="#" data-role="button" id="clear">clear</a></td>               
+                <td><a href="#" data-role="button" id="sortOf">comment</a></td>
+              </tr>
+            </table>
+            <table width="100%">
+              <tr>
+                <td><a href="#mappage" data-role="button" id="save">save</a></td>
+                <td><a href="#mappage" data-role="button" id="doNothing">do nothing</a></td>
+              </tr>
+            </table>              
+          </div>
+        </div>
+      </body>
+</html>
+
+
+<!--<script>
+          //this function sends the form info to CartoDB (but not currently in use)
+          function processCornerForm() {
+
+            //grab the information from the form
+            var id = document.getElementById("cornerID").innerHTML;
+            var rRamp = document.cornerForm.streetRramp.value;
+            var lRamp = document.cornerForm.streetLramp.value;
+            var texture = document.cornerForm.texture.value;
+            var flags = document.cornerForm.flags.value;
+
+            //put together the query
+            var query = "q=UPDATE corners SET evaluated = 'y', rramp = '"+rRamp+"', lramp = '"+lRamp+"', texture = '"+texture+"', flags = '"+flags+"' where id = '"+id+"'&api_key=df65312f62568527b7750a1266233be8a3d6c56c";
+            
+            //go back to the main page
+            window.location.replace(window.location.href.split("#")[0] + "#mappage");
+            return;
+          }
+        </script>-->
+
+
+        <!--<div id="popup" data-role="dialog">
+          <div display="inline" data-theme="d" data-role="header">
+            <h1>Intersection #<div id="intersectionID" style="display: inline"></div></h1>
+          </div>
+          <div data-theme="c" data-role="content">
+            <div style="text-align:center">
+              <h3>intersection of <div id="streetR" style="display: inline"></div> and <div id="streetL" style="display: inline"></div></h3>
+            </div>
+            <a href="#intersectionpage" data-role="button" data-icon="arrow-r" data-iconpos="right">corner-by-corner</a>
+            <a href="#intersectionpage2" data-role="button" data-icon="arrow-r" data-iconpos="right">all corners are the same</a>
+            <a href="#mappage" data-role="button" data-icon="back" data-theme="a">Go back</a>
+          </div>
+        </div>-->
+      
+
+            <!--old popup form
+            <div display="inline" data-theme="d" data-role="header">
+              <h1>Edit Corner Details</h1>
+            </div>
+            <div data-theme="c" data-role="content">
+              <div style="text-align:center">
+                <h3>Corner #<div id="cornerID" style="display: inline"></div> - 
+                  <div id="direction" style="display: inline"></div> corner of <div id="streetR" style="display: inline"></div> and <div id="streetL" style="display: inline"></div>
+                </h3>
+              </div>
+                <form name= "cornerForm">
+                  <h4>Is there a curb ramp for crossing <div id="streetR" style="display: inline"></div>?</h4>
+                    <select name="streetRramp">
+                    <option value="y">yes</option>
+                    <option value="n">no</option>
+                    </select>
+                  <h4>Is there a curb ramp for crossing <div id="streetL" style="display: inline"></div>?</h4>
+                    <select name="streetLramp">
+                    <option value="y">yes</option>
+                    <option value="n">no</option>
+                    </select>
+                  <h4>Are the ramps textured?</h4>
+                    <select name="texture">
+                    <option value="y">yes</option>
+                    <option value="n">no</option>
+                    <option value="r">only for the first street</option>
+                    <option value="l">only for the second street</option>
+                    </select>
+                  <h4>Any potential problems with the following:</h4>
+                    <select name="flags">
+                    <option value="none">none</option>
+                    <option value="safety">safety</option>
+                    <option value="slope">slope</option>
+                    <option value="drainage">drainage</option>
+                    <option value="safety, slope">safety and slope</option>
+                    <option value="safety, drainage">safety and drainage</option>
+                    <option value="slope, drainage">slope and drainage</option>
+                    <option value="safety, slope, drainage">safety, slope, and drainage</option>
+                    </select>
+                  <h4>Ready to send?</h4>
+                    <input type="button" value="Submit" onClick="processCornerForm()" />
+                </form>
+                  div id="querytest"></div
+            /div
+        </div>
+
+        <div data-role="page" id="layerspage">
+          <div data-role="header">
+            <h1>Layers</h1>
+          </div>
+          <div data-role="content">
+            <ul data-role="listview" data-inset="true" data-theme="d" data-dividertheme="c" id="layerslist">
+            </ul>
+          </div>
+        </div-->
+
+
