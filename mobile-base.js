@@ -1,5 +1,5 @@
 // Start here
-var apiKey = "AjqLfgr5dNzp2kVrdzttXeg9xj1cE5JTS61rnR-oBujjpTGyABaw4pEg31CdrXyx";  // Katie's Bing API key. 
+var apiKey = "AgQjrXIE9CdYspY6xDjYHhAlbPODFqfQdzmhnT2Ny2l5bpNvHC-0QdJFR-V-eZ6w ";  // Katie's Bing API, BASIC, updated May 2, 2013 
 
 var map;
 var i_map;

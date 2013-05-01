@@ -19,3 +19,7 @@
 # aptana stuff
 .metadata
 .project
+
+#vi
+.gitignore~
+\~
