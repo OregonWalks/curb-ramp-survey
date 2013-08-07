@@ -3,19 +3,19 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
         <title>Oregon Walks GIS Jam Inventory App</title>
-        <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" /> <!--meta name="viewport" content="initial-scale=1.0, user-scalable=no" /-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="description" content="An app for use by the Oregon Walks GIS Jam group and volunteers for a curb ramp inventory in Portland, OR."/>
         <meta name="author" content="Mele Sax-Barnett http://www.pdxmele.com"/>
 
         <!--css links-->
-        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" type="text/css"/> <!--<link rel="stylesheet" href="jquery.mobile-1.2.0.css" type="text/css"/>-->
+        <link rel="stylesheet" href="css/jquery.mobile-1.3.1.min.css" type="text/css"/> <!--<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" type="text/css"/>-->
         <link rel="stylesheet" href="css/style.mobile.css" type="text/css"/>
         <link rel="stylesheet" href="css/style.mobile-jq.css" type="text/css"/>
 
         <!--jQuery links-->
-        <script src="jquery/jquery-1.6.4.js"></script>
-        <script src="jquery/jquery.mobile-1.2.0.js"></script> <!--<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>-->
+        <script src="jquery/jquery-1.9.1.min.js"></script> <!--<script src="jquery/jquery-1.6.4.js"></script>-->
+        <script src="jquery/jquery.mobile-1.3.1.js"></script> <!--<script src="jquery/jquery.mobile-1.2.0.js"></script>-->
         <script src="OpenLayers/OpenLayers.js"></script> <!--script src="OpenLayers/OpenLayers.mobile.js"></script-->
         <script src="mobile-base.js"></script>
         <script src="mobile-jq.js"></script>
@@ -23,45 +23,51 @@
 
     <body>
         <div id="mappage" data-role="page">
-          <div data-role="content">
-            <div id="map"></div>
-          </div>
-          <div data-role="footer">
-            <a href="#" id="locate" data-icon="locate" data-role="button">locate</a>
-          </div>
+          <div id="map"></div>
           <div id="navigation" data-role="controlgroup" data-type="vertical">
-            <a href="#" data-role="button" data-icon="plus" id="plus" data-iconpos="notext"></a>
-            <a href="#" data-role="button" data-icon="minus" id="minus" data-iconpos="notext"></a>
+            <a href="#" id="plus" data-role="button" data-icon="plus" data-iconpos="notext"></a>
+            <a href="#" id="minus" data-role="button" data-icon="minus" data-iconpos="notext"></a>
+            <a href="#" id="locate" data-role="button" data-mini="true"> locate</a>
           </div>
         </div>
 
         <div id="intersectionpage" data-role="page">
-          <div style="text-align:center"><h4>crossing <div id="street" style="display:inline"></div></h4></div>
-          <div data-role="content">
             <div id="i_map"></div>
-            <table width="100%">
-              <tr>
-                <td><a href="#" data-role="button" id="yes">yes</a></td>
-                <td><a href="#" data-role="button" id="sortOf">sort of</a></td>
-                <td><a href="#" data-role="button" id="no">no</a></td>
-                <td><a href="#" data-role="button" id="skip">skip</a></td>
-              </tr>
-            </table>
-            <table width="100%">
-              <tr>
-                <td><a href="#" data-role="button" id="same">all like last</a></td>
-                <td><a href="#" data-role="button" id="clear">clear</a></td>               
-                <td><a href="#" data-role="button" id="sortOf">comment</a></td>
-              </tr>
-            </table>
-            <table width="100%">
-              <tr>
-                <td><a href="#mappage" data-role="button" id="save">save</a></td>
-                <td><a href="#mappage" data-role="button" id="doNothing">do nothing</a></td>
-              </tr>
-            </table>              
-          </div>
+            <div id="buttons">
+              <table width="100%"><tr>
+                <td><a id="yes" href="#" data-role="button" data-mini="true" style="color:green">yes</a></td>
+                <td><a id="sortOf" href="#rampNotes" data-role="button" data-mini="true" style="color:#c0c000">sort of</a></td>
+                <td><a id="no" href="#" data-role="button" data-mini="true" style="color:red">no</a></td>
+                <td><a id="skip" href="#" data-role="button" data-mini="true">skip</a></td>
+              </tr></table>
+              <table width="100%"><tr>
+                <td><a id="same" href="#" data-role="button" data-mini="true">all like last</a></td>
+                <td><a id="clear" href="#" data-role="button" data-mini="true">clear</a></td>               
+                <td><select id="intersectionNoteChoices" data-native-menu="false" multiple="multiple" data-mini="true">
+                  <option value="add_notes" data-placeholder="true">add notes:</option>
+                  <option value="confusing">confusing intersection</option>
+                  <option value="construction">construction</option>
+                  <option value="over_under">bridge or tunnel</option>
+                </select></td>
+              </tr></table>
+              <table width="100%"><tr>
+                <td><a id="save" href="#mappage" data-role="button" data-mini="true">save</a></td>
+                <td><a id="doNothing" href="#mappage" data-role="button" data-mini="true">do nothing</a></td>
+              </tr></table>
+            </div>
+          <div id="aNote">crossing <div id="street" style="display:inline"></div></div>
         </div>
+
+      <div id="rampNotes" data-role="dialog" closeBtnText="close">
+        <select id="rampNoteChoices" data-native-menu="false" multiple="multiple" data-mini="true">
+          <option value="add_notes" data-placeholder="true">notes for "sort-of" ramp:</option>
+          <option value="slope">slope</option>
+          <option value="surface">surface</option>
+          <option value="drainage">drainage</option>
+        </select>
+        <a id="close" href="#intersectionpage" data-role="button" data-mini="true">close</a>
+      </div>
+      
       </body>
 </html>
 
@@ -85,9 +91,7 @@
             return;
           }
         </script>-->
-
-
-        <!--<div id="popup" data-role="dialog">
+<!--<div id="popup" data-role="dialog">
           <div display="inline" data-theme="d" data-role="header">
             <h1>Intersection #<div id="intersectionID" style="display: inline"></div></h1>
           </div>
@@ -100,9 +104,7 @@
             <a href="#mappage" data-role="button" data-icon="back" data-theme="a">Go back</a>
           </div>
         </div>-->
-      
-
-            <!--old popup form
+<!--old popup form
             <div display="inline" data-theme="d" data-role="header">
               <h1>Edit Corner Details</h1>
             </div>
@@ -157,5 +159,6 @@
             </ul>
           </div>
         </div-->
-
-
+<!--
+<script src="http://code.jquery.com/jquery-migrate-1.2.0.js"></script>
+-->

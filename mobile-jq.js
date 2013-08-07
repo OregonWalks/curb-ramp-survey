@@ -2,17 +2,29 @@
 
 jQuery(document).ready(function() {
 	window.location.replace(window.location.href.split("#")[0] + "#mappage");
-    jQuery(window).bind("orientationchange resize pageshow", fixContentHeight);
-    document.body.onload = fixContentHeight;
+    jQuery(window).bind("orientationchange resize", setSize);
+    document.body.onload = initAreaMap;
+
+	jQuery("#mappage").on("pageshow", function(event, ui) {if (window.map && window.map instanceof OpenLayers.Map) {map.updateSize();};});
 
     jQuery("#plus").click(function(){map.zoomIn();});
     jQuery("#minus").click(function(){map.zoomOut();});
     jQuery("#locate").click(function(){
         var control = map.getControlsBy("id", "locate-control")[0];
-        if (control.active) {control.getCurrentLocation();} else {control.activate();}
+        if (control.active) {control.getCurrentLocation();} else {control.activate();};
     });
 
-	jQuery('#intersectionpage').live('pageshow',function(event, ui) {if (null == i_map) {initDetailMap()};});
+	jQuery("#intersectionpage").on("pageshow", function(event, ui) {
+		setSize();
+		if (null == i_map) {
+			initDetailMap();}
+		else if(!fromRampNotes) {
+			ramps.protocol.params.q = "select * from ramps where nodeid = "+intersectionID+ " order by bearing asc, down_ramp asc";
+			detailMapStrategy.refresh({force: true});
+			updateNotes();
+		};
+		fromRampNotes = false;
+	});
 
 	jQuery("#yes").click(function() {
 		rampAttrs.features[currentRamp].attributes.state = "yes"; rampAttrs.drawFeature(rampAttrs.features[currentRamp]);
@@ -20,7 +32,10 @@ jQuery(document).ready(function() {
 	});
 	jQuery("#sortOf").click(function() {
 		rampAttrs.features[currentRamp].attributes.state = "sort_of"; rampAttrs.drawFeature(rampAttrs.features[currentRamp]);
+		var attr = rampAttrs.features[currentRamp].attributes
+		rampID = (intersectionID*10000)+(10*attr.bearing)+((attr.down_ramp == "cw")?0:1);
 		moveCW();
+		fromRampNotes = true;
 	});
 	jQuery("#no").click(function() {
 		rampAttrs.features[currentRamp].attributes.state = "no"; rampAttrs.drawFeature(rampAttrs.features[currentRamp]);
@@ -49,15 +64,40 @@ jQuery(document).ready(function() {
 		var query;
 		for (f in rampAttrs.features) {
 			attr = rampAttrs.features[f].attributes;
-			query = "q=UPDATE ramps SET state = '"+attr.state+"' where nodeid = "+intersectionID+" AND bearing = "+attr.bearing+" AND down_ramp = '"+attr.down_ramp+"' &api_key=612cfbb8eb5240dc9e3ef988a61c5b0c9b733765";
+			query = "q=UPDATE ramps SET state = '"+attr.state+"' WHERE nodeid = "+intersectionID+" AND bearing = "+attr.bearing+" AND down_ramp = '"+attr.down_ramp+"' &api_key="+cartoDBkey;
 			jQuery.post("http://scottparker.cartodb.com/api/v2/sql", query);
 			if (attr.state != "none") {allNone = "y"};
 		};
-		query = "q=UPDATE intersections SET evaluated = '"+allNone+"' where node_id = "+intersectionID+"&api_key=612cfbb8eb5240dc9e3ef988a61c5b0c9b733765";
+		query = "q=UPDATE intersections SET evaluated = '"+allNone+"' WHERE node_id = "+intersectionID+"&api_key="+cartoDBkey;
 	    jQuery.post("http://scottparker.cartodb.com/api/v2/sql", query, function(data) {areaMapStrategy.refresh({force:true});});
-	});
-});
 
+		var selected;
+		jQuery("#intersectionNoteChoices option").each(function(j){
+			selected = jQuery(this).prop("selected");
+			if (selected && !intersectionNotes[j]) {
+				query = "q=INSERT INTO comments (association, associd, text) VALUES ('I', "+intersectionID+", '"+jQuery(this).val()+"') &api_key="+cartoDBkey;
+				jQuery.post("http://scottparker.cartodb.com/api/v2/sql", query);
+			};
+			if (!selected && intersectionNotes[j]) {
+				query = "q=DELETE FROM comments WHERE association = 'I' AND associd = "+intersectionID+" AND text = '"+jQuery(this).val()+"' &api_key="+cartoDBkey;
+				jQuery.post("http://scottparker.cartodb.com/api/v2/sql", query);
+			};
+		});
+		jQuery("#rampNoteChoices option").each(function(j){
+			selected = jQuery(this).prop("selected");
+			if (selected && !rampNotes[j]) {
+				query = "q=INSERT INTO comments (association, associd, text) VALUES ('R', "+rampID+", '"+jQuery(this).val()+"') &api_key="+cartoDBkey;
+				jQuery.post("http://scottparker.cartodb.com/api/v2/sql", query);
+			};
+			if (!selected && rampNotes[j]) {
+				query = "q=DELETE FROM comments WHERE association = 'R' AND associd = "+rampID+" AND text = '"+jQuery(this).val()+"' &api_key="+cartoDBkey;
+				jQuery.post("http://scottparker.cartodb.com/api/v2/sql", query);
+			};
+		});
+	});
+
+	jQuery("#rampNotes").on("pageshow", function(event, ui) {updateRampNotes();});
+});
 
 
 

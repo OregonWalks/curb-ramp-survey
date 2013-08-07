@@ -1,5 +1,8 @@
 // Start here
-var apiKey = "AgQjrXIE9CdYspY6xDjYHhAlbPODFqfQdzmhnT2Ny2l5bpNvHC-0QdJFR-V-eZ6w";  // Katie's Basic Bing API key, May 2, 2013. 
+var apiKey = "Ao5Ew1XnxVey8Mh0jgfL32mbQN1pNLQoDv48u1r5BJrGsf8r0Bach7FYO5wTpbHl";  // My Bing API key. Please get your own at http://bingmapsportal.com/ and use that instead.
+var cartoDBkey = "612cfbb8eb5240dc9e3ef988a61c5b0c9b733765";
+var buttonsHeight;
+var i_mapArea;
 
 var map;
 var i_map;
@@ -9,7 +12,7 @@ var sm = new OpenLayers.Projection("EPSG:900913");
 var geoJSONparser = new OpenLayers.Format.GeoJSON({ignoreExtraDims: true});
 
 var intersectionStyleMap = new OpenLayers.StyleMap({pointRadius: 7}); 
-var intersectionLookup = {"y": {fillColor: "orange"},"n": {fillColor: "blue"}};
+var intersectionLookup = {"y": {fillColor: "orange", graphicName: "triangle"},"n": {fillColor: "blue"}};
 intersectionStyleMap.addUniqueValueRules("default", "evaluated", intersectionLookup); //evaluated is attribute of intersections
 
 var rampStyleMap = new OpenLayers.StyleMap({display: "none"});
@@ -27,38 +30,35 @@ var detailMapStrategy;
 var hiLiteMapStrategy;
 var detailProtocol;
 
-var intersectionID; 
+var intersectionID;
+var rampID;
 var currentRamp;
-var corners;
 var hiLite;
 var rampAttrs;
 
-function fixContentHeight() {
-    var footer = jQuery("div[data-role='footer']:visible"),
-        content = jQuery("div[data-role='content']:visible:visible"),
-        viewHeight = jQuery(window).height(),
-        contentHeight = viewHeight - footer.outerHeight();
+var intersectionNoteChoiceCount;
+var intersectionNotes = [];
+var rampNoteChoiceCount;
+var rampNotes = [];
+var fromRampNotes = false;
 
-    if ((content.outerHeight() + footer.outerHeight()) !== viewHeight) {
-        contentHeight -= (content.outerHeight() - content.height() + 1);
-        content.height(contentHeight);
-    };
-
-    if (window.map && window.map instanceof OpenLayers.Map) {
-		map.updateSize();}
-	else {
-		initAreaMap();
-	};
+function setSize() {
+	buttonsHeight = jQuery("div[id='buttons']:visible").height();
+	if (buttonsHeight){
+		i_mapArea = jQuery("div[id='i_map']:visible");
+		if (i_mapArea.height() + buttonsHeight !== jQuery(window).height()) {
+			i_mapArea.height(jQuery(window).height() - buttonsHeight);
+		};
+	}
+    if (window.map && window.map instanceof OpenLayers.Map) {map.updateSize();};
 }
 
 /* initialize area map page */
 function initAreaMap() {
-    var vector = new OpenLayers.Layer.Vector("Location range", {});
-
 	areaMapStrategy = new OpenLayers.Strategy.Refresh({interval: 60000, force: true})
     var intersections = new OpenLayers.Layer.Vector("intersections", {
         projection: wgs,
-        strategies: [new OpenLayers.Strategy.BBOX(),areaMapStrategy],
+        strategies: [new OpenLayers.Strategy.BBOX(), areaMapStrategy],
         protocol: new OpenLayers.Protocol.Script({
 			url: "http://scottparker.cartodb.com/api/v2/sql",
             params: {q: "select * from intersections", format: "geojson"},
@@ -72,21 +72,24 @@ function initAreaMap() {
         autoActivate:true,
         onSelect: function(feature) {
 			intersectionID = feature.attributes["node_id"];
-			if (i_map) {
-				ramps.protocol.params.q = "select * from ramps where nodeid = "+intersectionID+ " order by bearing asc,down_ramp asc";
-				detailMapStrategy.refresh({force: true});
-			};
 			this.unselectAll();
-			jQuery.mobile.changePage("#intersectionpage"); 
+			jQuery.mobile.changePage("#intersectionpage");
         }
 	});
 
+    var locate = new OpenLayers.Layer.Vector("Location range", {});
     var geolocate = new OpenLayers.Control.Geolocate({
         id: 'locate-control',
         geolocationOptions: {enableHighAccuracy: true,maximumAge: 0,timeout: 7000}
     });
 
-    map = new OpenLayers.Map({ // create map
+    geolocate.events.register("locationupdated", this, function(e) {
+        locate.removeAllFeatures();
+        locate.addFeatures([new OpenLayers.Feature.Vector(e.point,{},{graphicName: 'cross',strokeColor: '#f00',strokeWidth: 2,fillOpacity: 0,pointRadius: 10})]);
+        map.zoomToExtent(locate.getDataExtent());
+    });
+
+    map = new OpenLayers.Map({
         div: "map",
         theme: null,
         projection: wgs,
@@ -99,28 +102,16 @@ function initAreaMap() {
         ],
         layers: [
             new OpenLayers.Layer.OSM("OpenStreetMap", null, {transitionEffect: 'resize'}),
-            vector, //the geolocation display
+            locate,
             intersections
         ],
         center: new OpenLayers.LonLat(-13654000, 5705400),
-        zoom:18
-    });
-
-    /*geolocation stuff*/
-    var style = {fillOpacity: 0.1,fillColor: '#000',strokeColor: '#f00',strokeOpacity: 0.6};
-    geolocate.events.register("locationupdated", this, function(e) {
-        vector.removeAllFeatures();
-        vector.addFeatures([ //after geolocates, draws a location range on the map
-            new OpenLayers.Feature.Vector(e.point,{},{graphicName: 'cross',strokeColor: '#f00',strokeWidth: 2,fillOpacity: 0,pointRadius: 10}),
-            new OpenLayers.Feature.Vector(OpenLayers.Geometry.Polygon.createRegularPolygon(new OpenLayers.Geometry.Point(e.point.x, e.point.y),e.position.coords.accuracy / 2,50,0),{},style)
-        ]);
-        map.zoomToExtent(vector.getDataExtent());
+        zoom:17
     });
 };
 
-/* load intersection detail page */
+/* initialize intersection detail page */
 function initDetailMap() {
-
 	detailMapStrategy = new OpenLayers.Strategy.Refresh();
 
 	hiLite = new OpenLayers.Layer.Vector("hiLite",{styleMap: hiLiteStyleMap});
@@ -128,7 +119,7 @@ function initDetailMap() {
 
 	ramps = new OpenLayers.Layer.Vector("ramps", {
         projection: wgs,
-		strategies: [new OpenLayers.Strategy.Fixed(),detailMapStrategy],
+		strategies: [new OpenLayers.Strategy.Fixed(), detailMapStrategy],
 		protocol: new OpenLayers.Protocol.Script({
 			url: "http://scottparker.cartodb.com/api/v2/sql",
 			params: {q: "select * from ramps where nodeid = "+intersectionID+ " order by bearing asc, down_ramp asc", format: "geojson"},
@@ -138,12 +129,12 @@ function initDetailMap() {
         styleMap: rampStyleMap,
         eventListeners: {
 			"featuresadded": function() {
-				this.map.zoomToExtent(this.getDataExtent())
+				this.map.zoomToExtent(this.getDataExtent());
 				hiLite.removeAllFeatures();
 				rampAttrs.removeAllFeatures();
 				var attributes;
 				var stateAttrs;
-				for (var i = 0; i< this.features.length; i++) {
+				for (var i=0; i<this.features.length; i++) {
 					attributes = this.features[i].attributes;
 					rampAttrs.addFeatures(new OpenLayers.Feature.Vector(this.features[i].geometry.clone()));
 					attrs = rampAttrs.features[i].attributes;
@@ -182,6 +173,10 @@ function initDetailMap() {
         center: new OpenLayers.LonLat(-13654000, 5705400),
         zoom:18
     });
+
+	intersectionNoteChoiceCount = jQuery("#intersectionNoteChoices option").length;
+	rampNoteChoiceCount = jQuery("#rampNoteChoices option").length;
+	updateNotes();
 };
 
 var moveCW = function() {
@@ -191,7 +186,45 @@ var moveCW = function() {
 	document.getElementById("street").innerHTML = rampAttrs.features[currentRamp].attributes.st_name;
 };
 
+var updateNotes = function(){
+	jQuery("#intersectionNoteChoices option").each(function() {jQuery(this).prop("selected", false);});
+	for (var j=1; j<intersectionNoteChoiceCount; j++){intersectionNotes[j] = false;};
+	var query = "q=SELECT * from comments where associd = "+intersectionID+ " AND association = 'I' &api_key="+cartoDBkey;
+	var noteText;
+	jQuery.getJSON("http://scottparker.cartodb.com/api/v2/sql", query, function(notes){
+		for (var i=0; i<notes.total_rows; i++) {
+			noteText = notes.rows[i].text;
+			jQuery("#intersectionNoteChoices option").each(function(j){
+				if (noteText == jQuery(this).val()) {
+					jQuery(this).prop("selected",true);
+					intersectionNotes[j] = true;
+				};
+			});
+		};
+		jQuery("#intersectionNoteChoices").selectmenu('refresh');
+	});
+};
 
+var updateRampNotes = function(){
+	jQuery("#rampNoteChoices option").each(function() {jQuery(this).prop("selected", false);});
+	for (var j=1; j<rampNoteChoiceCount; j++){intersectionNotes[j] = false;};
+	var query = "q=SELECT * from comments where associd = "+rampID+ " AND association = 'R' &api_key="+cartoDBkey;
+	var noteText;
+	jQuery.getJSON("http://scottparker.cartodb.com/api/v2/sql", query, function(notes){
+		for (var i=0; i<notes.total_rows; i++) {
+			noteText = notes.rows[i].text;
+			if (noteAssoc = "R") {
+				jQuery("#rampNoteChoices option").each(function(j){
+					if (noteText == jQuery(this).val()) {
+						jQuery(this).prop("selected",true);
+						rampNotes[j] = true;
+					};
+				});
+			};
+		};
+		jQuery("#rampNoteChoices").selectmenu('refresh');
+	});
+};
 
   /*var cStyleMap = new OpenLayers.StyleMap({
         "default": {
@@ -208,3 +241,20 @@ var moveCW = function() {
             //externalGraphic: "../img/marker.png"
             }
         }); */
+
+/*function fixContentHeight() {
+    var footer = jQuery("div[data-role='footer']:visible"),
+        content = jQuery("div[data-role='content']:visible:visible"),
+        viewHeight = jQuery(window).height(),
+        contentHeight = viewHeight - footer.outerHeight();
+
+    if ((content.outerHeight() + footer.outerHeight()) !== viewHeight) {
+        contentHeight -= (content.outerHeight() - content.height() + 1);
+        content.height(contentHeight);
+    };
+
+    if (window.map && window.map instanceof OpenLayers.Map) {
+		map.updateSize();}
+	else {
+		initAreaMap();
+	}; */
