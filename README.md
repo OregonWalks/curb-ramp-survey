@@ -1,12 +1,19 @@
-## This is the new UI for the Oregon Walks Curb Ramp Inventory App
+## UI for the Oregon Walks Curb Ramp Survey App
+
+
+### Contributors
+
+Primary development by Scott Parker (@jscottparker).  Testing and other support by 
+Katie Urey (@rbracket) and Peter W (@techieshark).
+
+## Roadmap
+
+After this app is tested, we'll use it to collect data and feed that into a pedestrian 
+and wheelchair routing application (probably powered by [Open Trip Planner](http://opentripplanner.com/demos)).
+
+### History
 
 Mele Sax-Barnett (pdxmele) developed the first application and it can be
 found at her github repository.
-
-The code here while is a revision as Scott Parker continues development 
-on the application.
-
-Katie Urey (rbracket) is hosting this on github for now as we prepare
-for testing.
 
 
