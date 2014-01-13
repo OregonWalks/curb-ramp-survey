@@ -16,4 +16,7 @@ and wheelchair routing application (probably powered by [Open Trip Planner](http
 Mele Sax-Barnett (pdxmele) developed the first application and it can be
 found at her github repository.
 
+###Access to the demo website 
+<a href="http://oregonwalks.github.io/curb-ramp-survey/" target="_blank">Curb Ramp Survey for Lloyd District</a>
+
 
