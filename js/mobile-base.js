@@ -1,6 +1,6 @@
 // Start here
-var apiKey = "AgQjrXIE9CdYspY6xDjYHhAlbPODFqfQdzmhnT2Ny2l5bpNvHC-0QdJFR-V-eZ6w";  // Katie's Bing API key. Please get your own at http://bingmapsportal.com/ and use that instead.
-var cartoDBkey = "612cfbb8eb5240dc9e3ef988a61c5b0c9b733765";
+var apiKey = settings.bingAPIkey;
+var cartoDBkey = settings.cartoDBkey;//"612cfbb8eb5240dc9e3ef988a61c5b0c9b733765";
 var buttonsHeight;
 var i_mapArea;
 
@@ -11,8 +11,8 @@ var wgs = new OpenLayers.Projection("EPSG:4326");
 var sm = new OpenLayers.Projection("EPSG:900913");
 var geoJSONparser = new OpenLayers.Format.GeoJSON({ignoreExtraDims: true});
 
-var intersectionStyleMap = new OpenLayers.StyleMap({pointRadius: 7}); 
-var intersectionLookup = {"y": {fillColor: "orange", graphicName: "triangle"},"n": {fillColor: "blue"}};
+var intersectionStyleMap = new OpenLayers.StyleMap({pointRadius: 7});
+var intersectionLookup = {"y": {fillColor: "orange", graphicName: "triangle"}, "n": {fillColor: "blue"}};
 intersectionStyleMap.addUniqueValueRules("default", "evaluated", intersectionLookup); //evaluated is attribute of intersections
 
 var rampStyleMap = new OpenLayers.StyleMap({display: "none"});
